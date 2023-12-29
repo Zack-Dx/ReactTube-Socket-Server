@@ -4,9 +4,15 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { Server } from "socket.io";
 import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 
 const app = express();
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGI,
+  })
+);
 
 const server = createServer(app);
 const io = new Server(server, {
