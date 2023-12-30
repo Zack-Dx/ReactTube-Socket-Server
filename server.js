@@ -1,46 +1,38 @@
-import express from "express";
-import { createServer } from "node:http";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-import { Server } from "socket.io";
-import dotenv from "dotenv";
-import cors from "cors";
-dotenv.config();
+import { Config } from "./config/index.js";
+import { ACTIONS } from "./constants/socket.actions.js";
+import { io, server } from "./config/socket.js";
+import { sendNewMessage } from "./utils/socket.js";
 
-const app = express();
-app.use(
-  cors({
-    origin: process.env.ALLOWED_ORIGIN,
-  })
-);
-
-const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.ALLOWED_ORIGIN,
-  },
-});
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-app.get("/", (req, res) => {
-  res.sendFile(join(__dirname, "index.html"));
-});
+const { PORT } = Config;
+const { NEW_MESSAGE } = ACTIONS;
 
 io.on("connection", (socket) => {
-  socket.on("new-message", (message) => {
-    if (message.length) {
-      sendNewMessage(message, socket);
-    }
-  });
+    console.log("Client Connected");
+    socket.on(NEW_MESSAGE, (message) => {
+        try {
+            if (message && typeof message === "string") {
+                sendNewMessage(message, socket);
+            } else {
+                throw new Error("Invalid message format");
+            }
+        } catch (error) {
+            console.error(`Error processing new message: ${error.message}`);
+        }
+    });
+
+    socket.on("error", (error) => {
+        console.error(`Socket error: ${error.message}`);
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Client Disconnected");
+    });
 });
 
-const { PORT } = process.env;
-
-server.listen(PORT || 5000, () => {
-  console.log("Server running at " + PORT);
+server.on("error", (error) => {
+    console.error(`Server error: ${error.message}`);
 });
 
-function sendNewMessage(message) {
-  io.emit("new-message", message);
-}
+server.listen(PORT, () => {
+    console.log(`Server running at ${PORT}`);
+});
