@@ -4,20 +4,39 @@ import { io, server } from "./config/socket.js";
 import { sendNewMessage } from "./utils/socket.js";
 
 const { PORT } = Config;
-const { NEW_MESSAGE } = ACTIONS;
+const { NEW_MESSAGE, FETCH_MESSAGES } = ACTIONS;
+
+const videoRooms = [];
 
 io.on("connection", (socket) => {
     console.log("Client Connected");
-    socket.on(NEW_MESSAGE, (message) => {
-        try {
-            if (message && typeof message === "string") {
-                sendNewMessage(message, socket);
-            } else {
-                throw new Error("Invalid message format");
-            }
-        } catch (error) {
-            console.error(`Error processing new message: ${error.message}`);
+    socket.on(NEW_MESSAGE, (data) => {
+        const { videoId, message } = data;
+        if (!videoId || !message) return;
+        const existingVideoRoom = videoRooms.find(
+            (videoRoom) => videoRoom.videoId === videoId
+        );
+        if (existingVideoRoom) {
+            existingVideoRoom.messages.push(message);
+            sendNewMessage(message);
+            return;
         }
+        videoRooms.push({
+            videoId, // Corrected line
+            messages: [message],
+        });
+        sendNewMessage(message);
+    });
+
+    socket.on(FETCH_MESSAGES, (videoId) => {
+        const existingVideoRoom = videoRooms.find(
+            (videoRoom) => videoRoom.videoId === videoId
+        );
+        if (existingVideoRoom) {
+            socket.emit("received-video-messages", existingVideoRoom.messages);
+            return;
+        }
+        socket.emit("received-video-messages", []);
     });
 
     socket.on("error", (error) => {
