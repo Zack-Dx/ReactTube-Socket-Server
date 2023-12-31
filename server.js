@@ -33,7 +33,10 @@ io.on("connection", (socket) => {
             (videoRoom) => videoRoom.videoId === videoId
         );
         if (existingVideoRoom) {
-            socket.emit("received-video-messages", existingVideoRoom.messages);
+            socket.emit(
+                "received-video-messages",
+                existingVideoRoom.messages.reverse()
+            );
             return;
         }
         socket.emit("received-video-messages", []);
