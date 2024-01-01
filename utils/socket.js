@@ -1,5 +1,5 @@
 import { io } from "../config/socket.js";
 
-export function sendNewMessage(message) {
-    io.emit("new-message", message);
+export function sendNewMessage(data) {
+    io.emit("new-message", data);
 }

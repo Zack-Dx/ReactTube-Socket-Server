@@ -18,14 +18,14 @@ io.on("connection", (socket) => {
         );
         if (existingVideoRoom) {
             existingVideoRoom.messages.push(message);
-            sendNewMessage(message);
+            sendNewMessage(data);
             return;
         }
         videoRooms.push({
             videoId, // Corrected line
             messages: [message],
         });
-        sendNewMessage(message);
+        sendNewMessage(data);
     });
 
     socket.on(FETCH_MESSAGES, (videoId) => {
@@ -33,6 +33,10 @@ io.on("connection", (socket) => {
             (videoRoom) => videoRoom.videoId === videoId
         );
         if (existingVideoRoom) {
+            if (existingVideoRoom.messages.length >= 15) {
+                existingVideoRoom.messages.shift();
+            }
+
             socket.emit(
                 "received-video-messages",
                 existingVideoRoom.messages.reverse()
