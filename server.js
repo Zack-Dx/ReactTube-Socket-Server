@@ -22,7 +22,7 @@ io.on("connection", (socket) => {
             return;
         }
         videoRooms.push({
-            videoId, // Corrected line
+            videoId,
             messages: [message],
         });
         sendNewMessage(data);
